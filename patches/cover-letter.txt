@@ -1,0 +1,70 @@
+Subject: [PATCH 0/1] owgw-spi-master: out-of-tree IIO driver for STM32 1-Wire gateway
+
+This is the cover letter for the single-patch series contained in this
+repository. The series is exported as a git format-patch artifact so it
+can be applied to any kernel tree that has the basic IIO + SPI subsystems
+(CONFIG_IIO, CONFIG_SPI, CONFIG_REGMAP).
+
+== Why this exists ==
+
+The upstream Linux IIO subsystem has no driver for SPI-attached 1-Wire
+gateways based on a custom MCU. This repository ships one such driver:
+the Linux master speaks a small request/response protocol (see
+include/linux/iio/temperature/owgw_iface.h) to an STM32 slave, which
+does the actual 1-Wire bit-banging and DS18B20 / similar conversions.
+
+The driver exposes up to 16 temperature channels through the standard
+IIO sysfs ABI. Polling is done by a delayed_work (default 1000 ms, user
+tunable 10..60000 ms); every reply is validated against a CRC-8
+(polynomial 0x07, MSB-first) before being exposed. No IRQ, no buffer
+mode — pure INDIO_DIRECT_MODE.
+
+== What's in the patch ==
+
+The patch carries the following files:
+
+  - owgw-spi-master.c                      full driver source
+  - include/linux/iio/temperature/owgw_iface.h   vendored protocol header
+  - Makefile                               out-of-tree build
+  - dkms.conf                              DKMS packaging for end users
+  - .github/workflows/build.yml            CI matrix over several LTS kernels
+  - Documentation/devicetree/bindings/iio/temperature/proglyk,owgw-spi-master.yaml
+                                            Device Tree binding schema
+  - LICENSE                                GPLv2 (required by MODULE_LICENSE)
+  - README.md                              description, build/install/test
+  - CLAUDE.md                              context for future Claude sessions
+  - MEMORY.md                              internal scratchpad
+  - .gitignore                             kernel-module + agent-specific noise
+  - patches/cover-letter.txt               this file
+
+The two source files (owgw-spi-master.c and owgw_iface.h) are verbatim
+copies from the in-house kernel-firefly tree, branch larus100rev3
+(uncommitted in that tree as of 2026-08-11). The Device Tree and Kconfig
+changes that integrate this driver into the in-house 4.19 tree are
+deliberately NOT part of this public release, because they are
+platform-specific.
+
+== How to apply ==
+
+  git am <patches/0001-owgw-spi-master.patch
+
+or, for out-of-tree use, just run `make` in the repository root.
+
+== Testing ==
+
+Smoke-tested on a Firefly ITX-3568Q with kernel 4.19.x: probe → 16
+channels present in iio_info, continuous polls at 1 Hz, CRC-validated,
+no warnings in dmesg. A long-duration (24 h) stress test is planned —
+see the README TODO list.
+
+== License ==
+
+GPLv2-only. The driver carries MODULE_LICENSE("GPL v2"). No
+EXPORT_SYMBOL_GPL consumers are needed by this driver itself, but the
+strict GPLv2 license is kept for consistency with the rest of the IIO
+subsystem.
+
+== Thanks ==
+
+Driver by Ilya Pronyashin <msg@proglyk.ru>, written in-house on a
+Firefly ITX-3568Q (RK3568) running kernel 4.19.

@@ -1,0 +1,33 @@
+# Agent-specific artifacts (working notes, plans, retrospective — NOT tracked)
+0/
+docs/
+.claude
+.remember
+.templates
+.council
+CLAUDE.md
+MEMORY.md
+AGENTS.md
+
+# Kernel module build artifacts
+*.o
+*.ko
+*.mod
+*.mod.c
+*.mod.o
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+.tmp_*.o.d
+.cache.mk
+
+# Out-of-tree build leftovers
+*.symvers
+*.order
+
+# Editor / OS noise
+*.swp
+*.swo
+*~
+.DS_Store
